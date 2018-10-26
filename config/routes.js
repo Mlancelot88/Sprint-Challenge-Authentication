@@ -23,12 +23,30 @@ function register(req, res) {
       const id = ids[0];
       return res.status(201).json({ newUserId: id });
     })
-    .catch(err => res.status(500).json({ Error: "User registration failed" }));
+    .catch(err =>
+      res
+        .status(500)
+        .json({ Error: "Server can not process registration request." })
+    );
 }
 
 // ---- User Login ----
 function login(req, res) {
   // implement user login
+  const credentials = req.body;
+  db("users")
+    .where({ username: credentials.username })
+    .first()
+    .then(user => {
+      if (user && bcrypt.compareSync(credentials.password, user.password)) {
+        const token = generateToken({ username: user.username });
+        return res.status(200).json({ Welcome: user.username, token });
+      }
+      return res.status(401).json({ Message: "You shall not pass!" });
+    })
+    .catch(err =>
+      res.status(500).json({ Error: "Server timeout. Unable to login." })
+    );
 }
 
 function getJokes(req, res) {
